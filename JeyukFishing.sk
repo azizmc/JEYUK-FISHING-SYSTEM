@@ -1,0 +1,526 @@
+# ==============================================================================
+#      ██╗███████╗██╗   ██╗██╗   ██╗██╗  ██╗    ███████╗██╗███████╗██╗  ██╗
+#      ██║██╔════╝╚██╗ ██╔╝██║   ██║██║ ██╔╝    ██╔════╝██║██╔════╝██║  ██║
+#      ██║█████╗   ╚████╔╝ ██║   ██║█████╔╝     █████╗  ██║███████╗███████║
+# ██   ██║██╔══╝    ╚██╔╝  ██║   ██║██╔═██╗     ██╔══╝  ██║╚════██║██╔══██║
+# ╚█████╔╝███████╗   ██║   ╚██████╔╝██║  ██╗    ██║     ██║███████║██║  ██║
+#  ╚════╝ ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝    ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝
+# ==============================================================================
+#  Product Name : JEYUK-FISHING SYSTEM
+#  Author       : Azizmc
+#  Version      : 1.0 - Extended Edition
+#  Description  : Professional Fishing System with GUI Mini-game, Rod Tiers, 
+#                 and Mythical Rare Collections.
+# ==============================================================================
+#
+# [ SCRIPT INFORMATION ]
+# * Main Features:
+#   - Interactive GUI "Reel-it-in" Mini-game.
+#   - Rod Tiering System (Upgradable T1 to T5).
+#   - Automated/Manual Selling System.
+#   - Mythical Collection Gallery (Track 10+ legendary catches).
+#   - Optimized Cached Leaderboard.
+#
+# [ DEPENDENCIES ]
+# 1. Skript (Latest)
+# 2. SkBee (Required for GUI & Metadata)
+# 3. Vault + EssentialsX (Economy)
+# 4. AuraSkills (Optional for XP)
+#
+# [ COMMANDS ]
+# * /fish - Open the main menu.
+# * /fish upgrade - Upgrade your current rod.
+#
+# [ SUPPORT ]
+# * Discord : https://discord.gg/fM3yKpeKFX
+# * Source  : https://github.com/azizmc/JEYUK-FISHING-SYSTEM
+#
+# ==============================================================================
+
+options:
+    # [ CONFIGURATION ]
+    prefix: &8[&b&lFISHING-SYSTEM&8]
+    server_name: &3&lJEYUK
+    # [ GLOBAL SETTINGS ]
+    enable_leaderboard: true  
+
+    # [ SET PRICE ]
+    p_kraken: 250000
+    p_leviathan: 500000
+    p_megalodon: 85000
+    p_poseidon: 55000
+    p_hydra: 45000
+    p_ancient: 35000
+    p_magmatic: 65000
+    p_abyssal: 40000
+    p_azure: 60000
+
+variables:
+    {auto_sell::%player%} = true
+    {fish_total::%player%} = 0
+    {fish_top_cached} = "&eNo data available..."
+
+# --- [ 0. LEADERBOARD SYSTEM ] ---
+function update_leaderboard():
+    if {@enable_leaderboard} is false:
+        set {fish_top_cached} to "&cLeaderboard is currently disabled."
+        stop
+        
+    copy {fish_secret::*} to {_temp_scores::*}
+    set {_lb} to "&d&lTOP SECRET FISHERS:%nl%"
+    set {_count} to 0
+    
+    set {_i} to 0
+    while {_i} < 5:
+        add 1 to {_i}
+        set {_max} to 0
+        set {_top_p} to ""
+        
+        loop {_temp_scores::*}:
+            if loop-value > {_max}:
+                set {_max} to loop-value
+                set {_top_p} to loop-index
+        
+        if {_top_p} is "":
+            set {_i} to 5 
+        else:
+            add 1 to {_count}
+            set {_p_name} to {_top_p} parsed as offline player
+            set {_lb} to "%{_lb}%&f%{_count}%. &b%{_p_name}% &7: &d%{_max}% Secret Fish%nl%"
+            delete {_temp_scores::%{_top_p}%}
+        
+    if {_count} > 0:
+        set {fish_top_cached} to {_lb}
+    else:
+        set {fish_top_cached} to "&cNo secret fish caught yet..."
+
+# --- [ 1. REWARD FUNCTION ] ---
+function give_reward(p: player, type: text):
+    set {_tier} to metadata value "fish_tier" of {_p}
+    add 1 to {fish_total::%{_p}%}
+    set {_prc} to 0
+    set {_id} to ""
+    set {_n} to "&fSomething slippery..."
+    set {_r} to random integer between 1 and 500
+
+    if {_tier} is 5:
+        if {_r} is 1: # KING KRAKEN
+            add 1 to {fish_secret::%{_p}%}
+            set {_n} to "&5&lK&d&lI&5&lN&d&lG &5&lK&d&lR&5&lA&d&lK&5&lE&d&lN"
+            set {_item} to (wither skeleton skull named "&0&l[&5&lKING KRAKEN&0&l]")
+            set {_prc} to {@p_kraken}
+            set {_id} to "KingKraken"
+            set time in world of {_p} to 18:00
+            broadcast "&0&l&m========================================"
+            broadcast "  &5&lS E C R E T   F O U N D !"
+            broadcast "  &b&l%{_p}% &ffound the &5&lKING KRAKEN&f!"
+            broadcast "&0&l&m========================================"
+            loop 5 times:
+                strike lightning effect at {_p}
+                execute console command "particle squid_ink %x-coord of {_p}% %y-coord of {_p}% %z-coord of {_p}% 0.5 0.5 0.5 0.1 20"
+                execute console command "particle dragon_breath %x-coord of {_p}% %y-coord of {_p}% %z-coord of {_p}% 0.5 0.5 0.5 0.1 10"
+                play sound "entity.wither.spawn" with volume 2 to all players
+                wait 5 ticks
+        else if {_r} is 2: # LEVIATHAN
+            if random integer between 1 and 2 is 1:
+                add 1 to {fish_secret::%{_p}%}
+                set {_n} to "&5&lLEVIATHAN"
+                set {_item} to (iron horse armor named {_n})
+                set {_prc} to {@p_leviathan}
+                set {_id} to "Leviathan"
+                broadcast "&4&l&k|||&c&l WARNING &4&l&k|||"
+                broadcast "&0&l&m========================================"
+                broadcast "  &4&lT H E   A N C I E N T   W O K E N !"
+                broadcast "  &b&l%{_p}% &fHAS FISHED THE &5&lLEVIATHAN&f!"
+                broadcast "  &c&lTHE WORLD SHAKES IN TERROR!"
+                broadcast "&0&l&m========================================"
+                loop 10 times:
+                    strike lightning effect at {_p}
+                    execute console command "particle flame %x-coord of {_p}% %y-coord of {_p}% %z-coord of {_p}% 0.5 1 0.5 0.1 15"
+                    execute console command "particle large_smoke %x-coord of {_p}% %y-coord of {_p}% %z-coord of {_p}% 0.5 1 0.5 0.1 5"
+                    play sound "entity.ender_dragon.death" with volume 5 and pitch 0.5 to all players
+                    play sound "entity.lightning_bolt.thunder" with volume 5 to all players
+                    wait 3 ticks
+            else:
+                set {_pool} to 2 # Fallback to Common
+        else if {_r} is between 3 and 7:
+            add 1 to {fish_secret::%{_p}%}
+            set {_n} to "&5&lMEGALODON"
+            set {_item} to (heart of the sea named {_n})
+            set {_prc} to {@p_megalodon}
+            set {_id} to "Megalodon"
+            play sound "entity.lightning_bolt.thunder" with volume 1 and pitch 1 to all players
+            strike lightning effect at {_p}
+        else if {_r} is between 8 and 18:
+            add 1 to {fish_secret::%{_p}%}
+            set {_n} to "&5&l🔱 POSEIDON REWARD 🔱"
+            set {_item} to (trident named {_n})
+            set {_prc} to {@p_poseidon}
+            set {_id} to "Poseidon"
+            play sound "entity.lightning_bolt.thunder" with volume 1 and pitch 1 to all players
+            strike lightning effect at {_p}
+
+    # --- [ REWARD UI POPUP ] ---
+    if {_id} is not "":
+        set {koleksi::%{_p}%::%{_id}%} to true
+        set {_gui} to chest inventory with 3 rows named "&0&lNEW COLLECTION: %{_n}%"
+        set slot 11 of {_gui} to (enchanted book named "&b&lSAVE FISH" with lore "&7Save to inventory", "&7to unlock collection.")
+        set slot 13 of {_gui} to {_item}
+        set slot 15 of {_gui} to (gold block named "&e&lSELL FISH" with lore "&7Sell this fish for:", "&a$%{_prc}%")
+        set metadata value "fish_item" of {_p} to {_item}
+        set metadata value "fish_price" of {_p} to {_prc}
+        open {_gui} to {_p}
+        stop
+
+    # --- [ REGULAR FISH POOL ] ---
+    if {_prc} is 0:
+        set {_pool} to random integer between 1 and {_tier}
+        if type is "RARE":
+            add 1 to {_pool}
+        
+        if {_pool} >= 5: # EPIC & LEGENDARY
+            set {_r_leg} to random integer between 1 and 10
+            if {_r_leg} <= 3:
+                play sound "ui.toast.challenge_complete" with volume 0.8 and pitch 1.2 to {_p}
+                set {_l} to random integer between 1 and 5
+                if {_l} is 1:
+                    set {_item} to (nautilus shell named "&6&lHydra Serpent")
+                    set {_prc} to {@p_hydra}
+                    set {_id} to "Hydra_Serpent"
+                else if {_l} is 2:
+                    set {_item} to (prismarine bricks named "&6&lAncient Leviathan")
+                    set {_prc} to {@p_ancient}
+                    set {_id} to "Ancient_Leviathan"
+                else if {_l} is 3:
+                    set {_item} to (magma cream named "&6&lMagmatic Carp")
+                    set {_prc} to {@p_magmatic}
+                    set {_id} to "Magmatic_Carp"
+                else if {_l} is 4:
+                    set {_item} to (prismarine named "&6&lAbyssal Predator")
+                    set {_prc} to {@p_abyssal}
+                    set {_id} to "Abyssal_Predator"
+                else:
+                    set {_item} to (prismarine crystals named "&6&lAzure Dragon")
+                    set {_prc} to {@p_azure}
+                    set {_id} to "Azure_Dragon"
+            else:
+                play sound "entity.experience_orb.pickup" with volume 1 and pitch 0.5 to {_p}
+                set {_e} to random integer between 1 and 3
+                if {_e} is 1:
+                    set {_item} to (heart of the sea named "&d&lDeep Sea Dragon")
+                    set {_prc} to 15000
+                    set {_id} to "Deep_Sea_Dragon"
+                else if {_e} is 2:
+                    set {_item} to (glow berries named "&d&lBioluminescent Squid")
+                    set {_prc} to 12000
+                    set {_id} to "Bioluminescent_Squid"
+                else:
+                    set {_item} to (golden apple named "&d&lMidas Fin")
+                    set {_prc} to 7500
+                    set {_id} to "Midas_Fin"
+        else if {_pool} is 4: # RARE
+            set {_r_rare} to random integer between 1 and 3
+            if {_r_rare} is 1:
+                set {_item} to (raw iron named "&b&lRiver Piranha")
+                set {_prc} to 4200
+            else if {_r_rare} is 2:
+                set {_item} to (prismarine shard named "&b&lBlacktip Shark")
+                set {_prc} to 3500
+            else:
+                set {_item} to (pufferfish named "&b&lPufferfish")
+                set {_prc} to 1200
+        else if {_pool} is 3: # UNCOMMON
+            set {_r_un} to random integer between 1 and 3
+            if {_r_un} is 1:
+                set {_item} to (raw copper named "&a&lElectric Eel")
+                set {_prc} to 1500
+            else if {_r_un} is 2:
+                set {_item} to (gold nugget named "&a&lGoldfish")
+                set {_prc} to 900
+            else:
+                set {_item} to (tropical fish named "&a&lTropical Fish")
+                set {_prc} to 600
+        else if {_pool} is 2: # COMMON
+            set {_r_com} to random integer between 1 and 3
+            if {_r_com} is 1:
+                set {_item} to (dried kelp named "&f&lSnakehead Fish")
+                set {_prc} to 300
+            else if {_r_com} is 2:
+                set {_item} to (cod named "&f&lCatfish")
+                set {_prc} to 400
+            else:
+                set {_item} to (salmon named "&f&lSalmon")
+                set {_prc} to 250
+        else:
+            if random integer between 1 and 2 is 1:
+                set {_item} to (glow ink sac named "&f&lSilver Rasbora")
+                set {_prc} to 150
+            else:
+                set {_item} to (cod named "&f&lCommon Fish")
+                set {_prc} to 100
+        
+        set {_n} to name of {_item}
+        if {_id} is not "":
+            set {koleksi::%{_p}%::%{_id}%} to true
+
+    execute console command "skills xp add %{_p}% fishing %({_prc} / 5)%"
+    if {auto_sell::%{_p}%} is true:
+        execute console command "eco give %{_p}% %{_prc}%"
+        send action bar "&a+$%{_prc}% &7| &fSold: %{_n}%" to {_p}
+        play sound "entity.experience_orb.pickup" with volume 0.5 and pitch 2 to {_p}
+    else:
+        give 1 of {_item} to {_p}
+        send action bar "&fCaught: %{_n}%" to {_p}
+        play sound "entity.item.pickup" with volume 0.5 and pitch 1 to {_p}
+
+# --- [ 2. PRICE LIST GUI ] ---
+function open_price_list(p: player):
+    set {_p_gui} to chest inventory with 6 rows named "&0&lPRICE LIST & CHANCE"
+    set {_s} to 0
+    loop 54 times:
+        set slot {_s} of {_p_gui} to (gray stained glass pane named "&7")
+        add 1 to {_s}
+        
+    set slot 1 of {_p_gui} to (cod named "&f&lCommon Fish") with lore "&8Tier: &fCommon", "&7Price: &a$100", "&7Chance: &f50%%", "&8Min. Rod: &7T1"
+    set slot 2 of {_p_gui} to (glow ink sac named "&f&lSilver Rasbora") with lore "&8Tier: &fCommon", "&7Price: &a$150", "&7Chance: &f50%%", "&8Min. Rod: &7T1"
+    set slot 3 of {_p_gui} to (salmon named "&f&lSalmon") with lore "&8Tier: &fCommon", "&7Price: &a$250", "&7Chance: &f30%%", "&8Min. Rod: &7T2"
+    set slot 4 of {_p_gui} to (dried kelp named "&f&lSnakehead Fish") with lore "&8Tier: &fCommon", "&7Price: &a$300", "&7Chance: &f30%%", "&8Min. Rod: &7T2"
+    set slot 5 of {_p_gui} to (cod named "&f&lCatfish") with lore "&8Tier: &fCommon", "&7Price: &a$400", "&7Chance: &f30%%", "&8Min. Rod: &7T2"
+    
+    set slot 10 of {_p_gui} to (tropical fish named "&a&lTropical Fish") with lore "&8Tier: &aUncommon", "&7Price: &a$600", "&7Chance: &a33%%", "&8Min. Rod: &7T3"
+    set slot 11 of {_p_gui} to (gold nugget named "&a&lGoldfish") with lore "&8Tier: &aUncommon", "&7Price: &a$900", "&7Chance: &a33%%", "&8Min. Rod: &7T3"
+    set slot 12 of {_p_gui} to (raw copper named "&a&lElectric Eel") with lore "&8Tier: &aUncommon", "&7Price: &a$1500", "&7Chance: &a33%%", "&8Min. Rod: &7T3"
+    
+    set slot 19 of {_p_gui} to (pufferfish named "&b&lPufferfish") with lore "&8Tier: &bRare", "&7Price: &a$1200", "&7Chance: &b33%%", "&8Min. Rod: &7T4"
+    set slot 20 of {_p_gui} to (prismarine shard named "&b&lBlacktip Shark") with lore "&8Tier: &bRare", "&7Price: &a$3500", "&7Chance: &b33%%", "&8Min. Rod: &7T4"
+    set slot 21 of {_p_gui} to (raw iron named "&b&lRiver Piranha") with lore "&8Tier: &bRare", "&7Price: &a$4200", "&7Chance: &b33%%", "&8Min. Rod: &7T4"
+    
+    set slot 28 of {_p_gui} to (golden apple named "&d&lMidas Fin") with lore "&8Tier: &dEpic", "&7Price: &a$7500", "&7Chance: &d70%%", "&8Min. Rod: &7T5"
+    set slot 29 of {_p_gui} to (glow berries named "&d&lBioluminescent Squid") with lore "&8Tier: &dEpic", "&7Price: &a$12000", "&7Chance: &d70%%", "&8Min. Rod: &7T5"
+    set slot 30 of {_p_gui} to (heart of the sea named "&d&lDeep Sea Dragon") with lore "&8Tier: &dEpic", "&7Price: &a$15000", "&7Chance: &d70%%", "&8Min. Rod: &7T5"
+
+    set slot 37 of {_p_gui} to (prismarine named "&6&lAbyssal Predator") with lore "&8Tier: &6Legendary", "&7Price: &a${@p_abyssal}", "&7Chance: &66%%", "&8Min. Rod: &7T5"
+    set slot 38 of {_p_gui} to (prismarine crystals named "&6&lAzure Dragon") with lore "&8Tier: &6Legendary", "&7Price: &a${@p_azure}", "&7Chance: &66%%", "&8Min. Rod: &7T5"
+    set slot 39 of {_p_gui} to (nautilus shell named "&6&lHydra Serpent") with lore "&8Tier: &6Legendary", "&7Price: &a${@p_hydra}", "&7Chance: &66%%", "&8Min. Rod: &7T5"
+    set slot 40 of {_p_gui} to (prismarine bricks named "&6&lAncient Leviathan") with lore "&8Tier: &6Legendary", "&7Price: &a${@p_ancient}", "&7Chance: &66%%", "&8Min. Rod: &7T5"
+    set slot 41 of {_p_gui} to (magma cream named "&6&lMagmatic Carp") with lore "&8Tier: &6Legendary", "&7Price: &a${@p_magmatic}", "&7Chance: &66%%", "&8Min. Rod: &7T5"
+    
+    set slot 46 of {_p_gui} to (trident named "&5&l🔱 POSEIDON REWARD 🔱") with lore "&8Tier: &5Secret", "&7Price: &a${@p_poseidon}", "&7Chance: &62%%", "&8Min. Rod: &7T5"
+    set slot 47 of {_p_gui} to (heart of the sea named "&5&lMEGALODON") with lore "&8Tier: &5Secret", "&7Price: &a${@p_megalodon}", "&7Chance: &51%%", "&8Min. Rod: &7T5"
+    set slot 48 of {_p_gui} to (wither skeleton skull named "&5&lKING KRAKEN") with lore "&8Tier: &5Secret", "&7Price: &a${@p_kraken}", "&7Chance: &50.2%%", "&8Min. Rod: &7T5"
+    set slot 49 of {_p_gui} to (iron horse armor named "&5&lLEVIATHAN") with lore "&8Tier: &5Secret", "&7Price: &a${@p_leviathan}", "&7Chance: &50.1%%", "&8Min. Rod: &7T5"
+    
+    set slot 53 of {_p_gui} to (barrier named "&c&lBACK")
+    open {_p_gui} to {_p}
+
+# --- [ 3. MINI-GAME ] ---
+function open_fish_gui(p: player):
+    set {_item} to tool of {_p}
+    set {_lore} to "%lore of {_item}%"
+    set {_tier} to 1
+    if {_lore} contains "Tier 1":
+        set {_tier} to 1
+    else if {_lore} contains "Tier 2":
+        set {_tier} to 2
+    else if {_lore} contains "Tier 3":
+        set {_tier} to 3
+    else if {_lore} contains "Tier 4":
+        set {_tier} to 4
+    else if {_lore} contains "Tier 5":
+        set {_tier} to 5
+    
+    set metadata value "fish_tier" of {_p} to {_tier}
+    set {_target_slot} to random integer between 2 and 6
+    set metadata value "fish_target" of {_p} to {_target_slot}
+    
+    set {_inv} to chest inventory with 1 row named "&0&lStatus: 🎣 REEL IT IN!"
+    set metadata value "is_fishing_gui" of {_p} to true
+    
+    loop 9 times:
+        set slot (loop-number - 1) of {_inv} to gray stained glass pane named "&8."
+    set slot {_target_slot} of {_inv} to yellow stained glass pane named "&e&lTARGET"
+    
+    open {_inv} to {_p}
+    
+    set {_pos} to 0
+    set {_dir} to 1
+    set {_turns} to 0
+    
+    loop 300 times:
+        if {_p} is not online:
+            stop
+        if metadata value "is_fishing_gui" of {_p} is not set:
+            stop
+        if name of current inventory of {_p} is not "&0&lStatus: 🎣 REEL IT IN!":
+            delete metadata value "is_fishing_gui" of {_p}
+            stop
+            
+        set {_slot} to 0
+        loop 9 times:
+            if {_slot} is {_target_slot}:
+                set slot {_slot} of current inventory of {_p} to yellow stained glass pane named "&e&lTARGET"
+            else:
+                set slot {_slot} of current inventory of {_p} to gray stained glass pane named "&8."
+            add 1 to {_slot}
+        
+        add {_dir} to {_pos}
+        if {_pos} >= 8:
+            set {_pos} to 8
+            set {_dir} to -1
+            add 1 to {_turns}
+        else if {_pos} <= 0:
+            set {_pos} to 0
+            set {_dir} to 1
+            add 1 to {_turns}
+            
+        if {_turns} >= 5:
+            delete metadata value "is_fishing_gui" of {_p}
+            close {_p}'s inventory
+            send action bar "&c&lLOST! &7The fish escaped!" to {_p}
+            play sound "entity.fish.swim" with volume 1 and pitch 0.5 to {_p}
+            stop
+            
+        set slot {_pos} of current inventory of {_p} to lime stained glass pane named "&a&lCLICK NOW!"
+        set metadata value "current_bar_pos" of {_p} to {_pos}
+        wait 4 ticks
+        
+# --- [ 4. COMMANDS & EVENTS ] ---
+command /fish [<text>]:
+    trigger:
+        if arg 1 is not set:
+            set {_m} to chest inventory with 3 rows named "&0&lFISHING MENU"
+            if {auto_sell::%player%} is true:
+                set slot 11 of {_m} to sunflower named "&eAUTO-SELL: &aON"
+            else:
+                set slot 11 of {_m} to sunflower named "&eAUTO-SELL: &cOFF"
+            set slot 10 of {_m} to (book named "&b&lFISH COLLECTION")
+            if {@enable_leaderboard} is true:
+                update_leaderboard()
+                set slot 13 of {_m} to (player's skull named "&6&lLEADERBOARD" with lore {fish_top_cached})
+            else:
+                set slot 13 of {_m} to (barrier named "&c&lLEADERBOARD" with lore "&7Leaderboard is disabled.")
+            set slot 15 of {_m} to (fishing rod named "&e&lUPGRADE ROD")
+            set slot 22 of {_m} to (paper named "&b&lPRICE & CHANCE INFO")
+            open {_m} to player
+        else if arg 1 is "upgrade":
+            if tool of player is not fishing rod:
+                send "&cYou must hold a fishing rod!"
+                stop
+            set {_lore} to "%lore of tool of player%"
+            set {_t} to 1
+            if {_lore} contains "Tier 2":
+                set {_t} to 2
+            else if {_lore} contains "Tier 3":
+                set {_t} to 3
+            else if {_lore} contains "Tier 4":
+                set {_t} to 4
+            else if {_lore} contains "Tier 5":
+                set {_t} to 5
+            set {_u} to chest inventory with 1 row named "&0&lROD UPGRADE"
+            if {_t} >= 5:
+                set slot 4 of {_u} to (barrier named "&c&lMAX LEVEL")
+            else:
+                set {_next} to {_t} + 1
+                set {_cost} to 10000 * {_t}
+                set slot 4 of {_u} to (fishing rod named "&b&lUPGRADE TO TIER %{_next}%" with lore "&7Cost: &a$%{_cost}%")
+            open {_u} to player
+
+on fishing state change:
+    if fishing state is caught fish:
+        cancel event
+        wait 1 tick
+        open_fish_gui(player)
+
+on inventory click:
+    if name of current inventory contains "NEW COLLECTION":
+        cancel event
+        if index of clicked slot is 11:
+            set {_item} to metadata value "fish_item" of player
+            if player can hold {_item}:
+                give {_item} to player
+            else:
+                drop {_item} at player
+                send "{@prefix} &cInventory full! The fish dropped at your feet."
+            close player's inventory
+        else if index of clicked slot is 15:
+            execute console command "eco give %player% %metadata value "fish_price" of player%"
+            close player's inventory
+    else if metadata value "is_fishing_gui" of player is set:
+        cancel event
+        set {_clicked} to index of clicked slot
+        set {_current} to metadata value "current_bar_pos" of player
+        if {_clicked} is {_current}:
+            delete metadata value "is_fishing_gui" of player
+            close player's inventory
+            if {_clicked} is (metadata value "fish_target" of player):
+                give_reward(player, "RARE")
+            else:
+                give_reward(player, "COMMON")
+        else:
+            delete metadata value "is_fishing_gui" of player
+            close player's inventory
+            send "&c&lLOST!" to player
+    else if name of current inventory is "&0&lFISHING MENU":
+        cancel event
+        if index of clicked slot is 10:
+            set {_k} to chest inventory with 3 rows named "&0&lRARE COLLECTION"
+            set {_slot_k} to 0
+            loop "KingKraken", "Leviathan", "Megalodon", "Poseidon", "Hydra_Serpent", "Ancient_Leviathan", "Magmatic_Carp", "Abyssal_Predator", "Azure_Dragon", "Deep_Sea_Dragon", "Bioluminescent_Squid" and "Midas_Fin":
+                set {_display} to loop-value
+                replace all "_" with " " in {_display}
+                if {koleksi::%player%::%loop-value%} is true:
+                    set {_c} to "&5"
+                    if loop-value is "Hydra_Serpent" or "Ancient_Leviathan" or "Magmatic_Carp" or "Abyssal_Predator" or "Azure_Dragon":
+                        set {_c} to "&6"
+                    else if loop-value is "Deep_Sea_Dragon" or "Bioluminescent_Squid" or "Midas_Fin":
+                        set {_c} to "&d"
+                    set slot {_slot_k} of {_k} to (paper named "%{_c}%%{_display}%" with lore "&aCOLLECTED")
+                else:
+                    set slot {_slot_k} of {_k} to (barrier named "&c???" with lore "&7Not discovered yet!")
+                add 1 to {_slot_k}
+            open {_k} to player
+        else if index of clicked slot is 22:
+            open_price_list(player)
+        else if index of clicked slot is 15:
+            execute player command "fish upgrade"
+        else if index of clicked slot is 11:
+            if {auto_sell::%player%} is true:
+                set {auto_sell::%player%} to false
+            else:
+                set {auto_sell::%player%} to true
+            execute player command "fish"
+    else if name of current inventory contains "ROD UPGRADE":
+        cancel event
+        if index of clicked slot is 4:
+            set {_lore} to "%lore of tool of player%"
+            set {_tier} to 1
+            if {_lore} contains "Tier 2":
+                set {_tier} to 2
+            else if {_lore} contains "Tier 3":
+                set {_tier} to 3
+            else if {_lore} contains "Tier 4":
+                set {_tier} to 4
+            else if {_lore} contains "Tier 5":
+                set {_tier} to 5
+            if {_tier} < 5:
+                set {_cost} to 10000 * {_tier}
+                if player's balance >= {_cost}:
+                    execute console command "eco take %player% %{_cost}%"
+                    set name of tool of player to "&b&lMYTHIC ROD (T%({_tier} + 1)%)"
+                    set lore of tool of player to "&fTier %({_tier} + 1)%"
+                    close player's inventory
+                    play sound "entity.player.levelup" with volume 1 and pitch 1 to player
+                    send "{@prefix} &a&lSUCCESS! &fYour rod has been upgraded to Tier %({_tier} + 1)%" to player
+    else if name of current inventory contains "PRICE LIST" or "RARE COLLECTION":
+        cancel event
+        if index of clicked slot is 53:
+            execute player command "fish"
+
+on quit:
+    delete metadata value "is_fishing_gui" of player
+    delete metadata value "fish_tier" of player
+
+on death:
+    if metadata value "is_fishing_gui" of victim is set:
+        close victim's inventory
+        delete metadata value "is_fishing_gui" of victim
