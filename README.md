@@ -56,7 +56,8 @@ To ensure a smooth experience, your server must have the following:
 ## 💬 Support & Community
 Want to see the script in action or need help with setup? Join our official Minecraft server development Discord!
 * **Discord Server:** [Join Here](https://discord.gg/fM3yKpeKFX)
-* **Live Demo:** You can test this system directly on our Minecraft server (DISCORD: `https://discord.gg/fM3yKpeKFX`)
+* **Live Demo:** You can test this system directly on our Minecraft server [Join Here](https://discord.gg/fM3yKpeKFX)
+
 
 ---
 
