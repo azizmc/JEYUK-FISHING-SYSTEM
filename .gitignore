@@ -1,0 +1,29 @@
+# --- Minecraft Server Junk ---
+*.log
+logs/
+cache/
+world/
+world_nether/
+world_the_end/
+usercache.json
+whitelist.json
+banned-players.json
+banned-ips.json
+ops.json
+server.properties
+help.yml
+
+# --- Plugin Related ---
+plugins/*/
+!plugins/Skript/
+!plugins/Skript/scripts/
+
+# --- Skript Junk ---
+plugins/Skript/scripts/-*
+plugins/Skript/logs/
+plugins/Skript/variables.csv
+
+# --- System Junk ---
+.DS_Store
+Thumbs.db
+
