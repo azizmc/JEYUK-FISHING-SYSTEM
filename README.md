@@ -2,6 +2,7 @@
 **The Ultimate Interactive & Professional Fishing Experience for Skript!**
 
 ![2026-03-26_23.41.51.png](https://github.com/azizmc/JEYUK-FISHING-SYSTEM/blob/main/img/2026-03-26_23.41.51.png)
+![2026-03-26_23.50.34.png](https://github.com/azizmc/JEYUK-FISHING-SYSTEM/blob/main/img/2026-03-26_23.50.34.png)
 
 ---
 
