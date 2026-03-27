@@ -1,7 +1,7 @@
 # 🎣 JEYUK-FISHING SYSTEM v1.0 🌊
 **The Ultimate Interactive & Professional Fishing Experience for Skript!**
 
-![2026-03-26_23.41.51.png](https://img/2026-03-26_23.41.51.png)
+![2026-03-26_23.41.51.png](https://JEYUK-FISHING-SYSTEM/2026-03-26_23.41.51.png)
 
 ---
 
